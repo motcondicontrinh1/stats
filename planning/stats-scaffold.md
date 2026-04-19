@@ -10,8 +10,8 @@ New project at `/Users/cris/Projects/stats`. GitHub remote: `https://github.com/
 
 Strava OAuth reuses CLIENT_ID `225803` (same app as `strava-dashboard`). The token proxy pattern is identical — an Edge Function at `/api/token` keeps the client secret server-side. Source references (read-only, do not modify):
 
-- `strava-dashboard/api/token.js` — OAuth proxy to copy verbatim
-- `strava-dashboard/src/utils/auth.js` — token lifecycle to copy verbatim
+- `/Users/cris/Projects/strava-dashboard/api/token.js` — OAuth proxy to copy verbatim
+- `/Users/cris/Projects/strava-dashboard/src/utils/auth.js` — token lifecycle to copy verbatim
 
 Design system: Ferrari (`DESIGN.md`). Read it in full before writing any UI.
 
