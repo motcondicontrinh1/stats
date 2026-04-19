@@ -118,3 +118,4 @@ Activities filter: only show entries where `sport_type === 'Run' || type === 'Ru
 - [ ] Border-radius on interactive elements is 2px, not rounded/pill
 - [ ] `npm run build` produces a clean `dist/` without errors
 - [ ] No console errors on initial page load
+- [ ] `npm run deploy` succeeds and the app is live on Vercel

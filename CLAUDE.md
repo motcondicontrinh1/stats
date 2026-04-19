@@ -115,3 +115,4 @@ Verifiable conditions that define "done."
 5. **No file deletions without explicit spec instruction.**
 6. **No scope creep.** OpenCode implements the spec as written.
 7. **Read DESIGN.md before any UI work.** The Ferrari design system is non-negotiable.
+8. **Deploy after every task.** After implementing and verifying a spec, run `npm run deploy` (`vercel --prod`) to push the changes to production. Do not consider a task complete until deployment succeeds.
