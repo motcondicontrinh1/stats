@@ -8,11 +8,7 @@ Bootstrap the complete `stats` running dashboard — a Vite + React + Tailwind S
 
 New project at `/Users/cris/Projects/stats`. GitHub remote: `https://github.com/motcondicontrinh1/stats.git`.
 
-Strava OAuth reuses CLIENT_ID `225803` (same app as `strava-dashboard`). The token proxy pattern is identical — an Edge Function at `/api/token` keeps the client secret server-side. Source references (read-only, do not modify):
-
-- `/Users/cris/Projects/strava-dashboard/api/token.js` — OAuth proxy to copy verbatim
-- `/Users/cris/Projects/strava-dashboard/src/utils/auth.js` — token lifecycle to copy verbatim
-
+Strava OAuth uses CLIENT_ID `225803`. An Edge Function at `/api/token` keeps the client secret server-side. 
 Design system: Ferrari (`DESIGN.md`). Read it in full before writing any UI.
 
 **The goal is NOT to reproduce Ferrari's website.** The goal is to use Ferrari's token system — its colors, its typographic precision, its restraint — to build something that feels unexpected for a running dashboard. Think: a personal timing board, a race result screen, a data instrument. Something a runner would open every morning and feel proud of. Surprise the user.
@@ -65,9 +61,9 @@ Activities filter: only show entries where `sport_type === 'Run' || type === 'Ru
 
 8. **`index.html`** — Standard Vite HTML. In `<head>`: charset utf-8, viewport meta, title "stats", Google Fonts preconnect + link for Inter (weights 400,500,600,700). Body has `<div id="root"></div>` and `<script type="module" src="/src/main.jsx"></script>`.
 
-9. **`api/token.js`** — Copy verbatim from `strava-dashboard/api/token.js`. No changes.
+9. **`api/token.js`** — Vercel Edge Function (`export const config = { runtime: 'edge' }`). Accepts POST with JSON body. Handles two grant types: `authorization_code` (requires `code` + `redirect_uri`) and `refresh_token` (requires `refresh_token`). Posts to `https://www.strava.com/oauth/token` with `client_id: '225803'` and `client_secret: process.env.STRAVA_CLIENT_SECRET`. Returns `{ access_token, refresh_token, expires_at, athlete }`. Include CORS headers and OPTIONS preflight support.
 
-10. **`src/utils/auth.js`** — Copy verbatim from `strava-dashboard/src/utils/auth.js`. No changes.
+10. **`src/utils/auth.js`** — Token lifecycle utilities using localStorage. Keys: `stats_access_token`, `stats_refresh_token`, `stats_expires_at`. Named exports: `saveTokens(tokenData)`, `loadTokens()` → `{ accessToken, refreshToken, expiresAt }`, `clearTokens()`, `isTokenExpired()`, `needsRefresh()` (true if within 300s of expiry), `exchangeTokenViaProxy(code)` (POST `/api/token` with code + redirect_uri), `refreshTokenViaProxy(refreshToken)` (POST `/api/token` with refresh_token grant). Export `REFRESH_BUFFER = 300`.
 
 11. **`src/utils/formatters.js`** — Create with four named exports:
     - `formatPace(metersPerSecond)`: converts m/s to "M:SS /km" string. Formula: secondsPerKm = 1000 / metersPerSecond, then format as minutes:seconds. Return `"—"` if value is falsy or <= 0.
@@ -79,7 +75,7 @@ Activities filter: only show entries where `sport_type === 'Run' || type === 'Ru
 
 13. **`src/main.jsx`** — Import React, ReactDOM createRoot, App, and `./index.css`. Mount `<App />` to `document.getElementById('root')`.
 
-14. **`src/App.jsx`** — Adapted from `strava-dashboard/src/App.jsx`. Remove all references to Header, ActivityDrawer, CardExportModal, stats (`/athletes/{id}/stats`), selectedActivityId. Keep: all token lifecycle hooks (scheduleTokenRefresh, doRefresh, ensureValidToken), apiGet, loadDashboard, disconnect, and the init useEffect. In loadDashboard: fetch `/athlete` and `/athlete/activities?per_page=30&page=1`, then filter activities to only `sport_type === 'Run' || type === 'Run'`, set state. Screen states: `'oauth'` | `'loading'` | `'dashboard'`. JSX: render `<OAuthScreen>`, `<LoadingScreen>`, or `<Dashboard>` based on screen — no wrapper div glows, no ambient blobs, just `<div className="min-h-screen bg-absolute-black text-white font-sans">`.
+14. **`src/App.jsx`** — Root component managing auth state and screen routing. Use React hooks (useState, useEffect, useRef, useCallback). Token lifecycle: `scheduleTokenRefresh`, `doRefresh`, `ensureValidToken` using utils from `src/utils/auth.js`. `apiGet(endpoint)` wraps fetch to `https://www.strava.com/api/v3` with Bearer token, auto-refreshes on 401. `loadDashboard` fetches `/athlete` then `/athlete/activities?per_page=30&page=1`, filters to `sport_type === 'Run' || type === 'Run'`, sets state. `disconnect` clears tokens and resets to oauth screen. Init useEffect handles OAuth callback (code in query string) and restores existing sessions. Screen states: `'oauth'` | `'loading'` | `'dashboard'`. Renders `<OAuthScreen>`, `<LoadingScreen>`, or `<Dashboard>` accordingly.
 
 15. **`src/components/OAuthScreen.jsx`** — The entry point. Needs to feel intentional, not like a placeholder. Props: `error`. Must include an anchor tag that navigates to the Strava OAuth URL: `https://www.strava.com/oauth/authorize?client_id=225803&response_type=code&redirect_uri=${window.location.origin}&approval_prompt=force&scope=read,activity:read,profile:read_all`. If `error` prop is present, display it. Design is the implementer's creative call — use the Ferrari token system from `DESIGN.md`.
 
@@ -97,8 +93,8 @@ Activities filter: only show entries where `sport_type === 'Run' || type === 'Ru
 - `.gitignore` — create
 - `.env.example` — create
 - `index.html` — create
-- `api/token.js` — create (copy from strava-dashboard)
-- `src/utils/auth.js` — create (copy from strava-dashboard)
+- `api/token.js` — create
+- `src/utils/auth.js` — create
 - `src/utils/formatters.js` — create
 - `src/index.css` — create
 - `src/main.jsx` — create
